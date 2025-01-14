@@ -3,7 +3,9 @@
     Search for <input v-model="searchInput" />
 
     <div>
-      <p>Number of events: {{ results }}</p>
+      <p>Loading: {{ getEvents.loading }}</p>
+      <p>Error: {{ getEvents.error }}</p>
+      <p>Number of events: {{ getEvents.results }}</p>
     </div>
   </div>
 </template>
@@ -11,24 +13,22 @@
 <script>
 import { ref, watch } from 'vue'
 import eventApi from '@/api/event.js'
+import usePromise from '@/composables/use-promise'
 
 export default {
   setup() {
     const searchInput = ref('')
-    const results = ref(0)
+    const getEvents = usePromise((search) => eventApi.getEventCount(search.value))
 
-    watch(
-      searchInput,
-      () => {
-        results.value = eventApi.getEventCount(searchInput.value)
-      },
-      { immediate: true },
-    )
+    watch(searchInput, () => {
+      if (searchInput.value !== '') {
+        getEvents.createPromise(searchInput)
+      } else {
+        getEvents.results.value = null
+      }
+    })
 
-    return {
-      searchInput,
-      results,
-    }
+    return { searchInput, getEvents }
   },
 }
 </script>
